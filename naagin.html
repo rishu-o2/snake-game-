@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Snake Game</title>
+ <script src="https://cdn.jsdelivr.net/npm/phaser@3.50.1/dist/phaser.min.js"></script>
+</head>
+<body>
+  <div id="game"></div>
+  
+  <script>
+    const game = new Phaser.Game({
+      type: Phaser.CANVAS,
+      parent: 'game',
+      width: 1000,
+      height: 600,
+      scene: {
+        preload: preload,
+        create: create,
+        update: update
+      }
+    });
+
+    let snake;
+    let food;
+    let direction;
+    let score = 0;
+    let speed = 5; 
+    
+
+    function preload() {
+      this.load.image('snake', 'snake.png');
+      this.load.image('food', 'food.png');
+    }
+
+    function create() {
+      snake = this.add.group();
+      food = this.add.sprite(400, 300, 'food');
+      direction = 'right';
+
+      for (let i = 0; i < 3; i++) {
+        const segment = this.add.sprite(200 + i * 20, 200, 'snake');
+        snake.add(segment);
+      }
+
+      
+      this.input.keyboard.on('keydown', (event) => {
+        if (event.key === 'ArrowUp' && direction !== 'down') {
+          direction = 'up';
+        } else if (event.key === 'ArrowDown' && direction !== 'up') {
+          direction = 'down';
+        } else if (event.key === 'ArrowLeft' && direction !== 'right') {
+          direction = 'left';
+        } else if (event.key === 'ArrowRight' && direction !== 'left') {
+          direction = 'right';
+        }
+      });
+    }
+    function update(time, delta) {
+  
+
+  
+  if (head.x < 0 || head.x > game.config.width - 20 || head.y < 0 || head.y > game.config.height - 20) {
+    alert('Game Over! Your score is ' + score);
+    score = 0;
+    snake.clear();
+    create();
+
+    
+    fetch('/save-score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score, username: 'Anonymous' }),
+    })
+      .then((response) => response.json())
+      .then((data) => console.log(data))
+      .catch((error) => console.error(error));
+  }
+
+}
+    function update(time, delta) {
+      for (let i = snake.children.entries.length - 1; i > 0; i--) {
+        const segment = snake.children.entries[i];
+        const prevSegment = snake.children.entries[i - 1];
+        segment.setPosition(prevSegment.x, prevSegment.y);
+      }
+
+      const head = snake.children.entries[0];
+      if (direction === 'up') {
+        head.y -= speed;
+      } else if (direction === 'down') {
+        head.y += speed;
+      } else if (direction === 'left') {
+        head.x -= speed;
+      } else if (direction === 'right') {
+        head.x += speed;
+      }
+
+      if (Phaser.Math.Distance.Between(head.x, head.y, food.x, food.y) < 10) {
+        score++;
+        food.setPosition(Math.random() * (game.config.width - 20), Math.random() * (game.config.height - 20));
+        const newSegment = this.add.sprite(head.x, head.y, 'snake');
+        snake.add(newSegment);
+      }
+
+      
+      if (head.x < 0 || head.x > game.config.width - 20 || head.y < 0 || head.y > game.config.height - 20) {
+        alert('Game Over! Your score is ' + score);
+        score = 0;
+        snake.clear();
+        create();
+      }
+
+      for (let i = 1000; i < snake.children.entries.length; i++) {
+        const segment = snake.children.entries[i];
+        if (Phaser.Math.Distance.Between(head.x, head.y, segment.x, segment.y) < 10) {
+          alert('Game Over! Your score is ' + score);
+          score = 0;
+          snake.clear();
+          create();
+        }
+      }
+    }
+  </script>
+  <div id ="recordArea"></div>
+  <script src="game record.js"></script>
+</body>
+</html>
